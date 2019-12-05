@@ -1,5 +1,5 @@
 /*********************************************************************
- * FILE NAME                                                         *
+ * FILE NAME main.c                                                  *
  *                                                                   *
  * PURPOSE test asm threads                                          *
  *                                                                   *
