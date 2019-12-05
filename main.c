@@ -27,13 +27,13 @@
  * Global Variables
  *********************************************************************/
 
-struct thread_arguments_c
+struct thread_arguments
 {
     int8_t *buffer_addr;
     uint32_t buffer_size;
 };
 
-struct thread_arguments_a
+struct thread_arguments_wtv
 {
     int8_t *buffer_addr;
     uint32_t buffer_size;
@@ -66,7 +66,7 @@ void TestFnc (int8_t *buffer_addr, uint32_t buffer_size)
 
 void * ThreadPrgC (void *arguments)
 {
-struct thread_arguments_c* p = (struct thread_arguments_c*) arguments;
+struct thread_arguments* p = (struct thread_arguments*) arguments;
 
 TestFnc(p->buffer_addr,p->buffer_size);
 
@@ -74,15 +74,57 @@ return NULL;
 }
 
 /********************************************************************
- * F NAME ThreadPrgAsm();
+ * F NAME ThreadPrgAsm1();
  *
  ********************************************************************/
 
-void * ThreadPrgAsm (void *arguments)
+void * ThreadPrgAsm1 (void *arguments)
 {
-struct thread_arguments_a* p = (struct thread_arguments_a*) arguments;
+struct thread_arguments* p = (struct thread_arguments*) arguments;
 
-TestFnAsm(p->buffer_addr,p->buffer_size,&p->tmp_var);
+TestFnAsm1(p->buffer_addr,p->buffer_size);
+
+return NULL;
+}
+
+/********************************************************************
+ * F NAME ThreadPrgAsm2();
+ *
+ ********************************************************************/
+
+void * ThreadPrgAsm2 (void *arguments)
+{
+struct thread_arguments* p = (struct thread_arguments*) arguments;
+
+TestFnAsm2(p->buffer_addr,p->buffer_size);
+
+return NULL;
+}
+
+/********************************************************************
+ * F NAME ThreadPrgAsm3();
+ *
+ ********************************************************************/
+
+void * ThreadPrgAsm3 (void *arguments)
+{
+struct thread_arguments_wtv* p = (struct thread_arguments_wtv*) arguments;
+
+TestFnAsm3(p->buffer_addr,p->buffer_size,&p->tmp_var);
+
+return NULL;
+}
+
+/********************************************************************
+ * F NAME ThreadPrgAsm4();
+ *
+ ********************************************************************/
+
+void * ThreadPrgAsm4 (void *arguments)
+{
+struct thread_arguments* p = (struct thread_arguments*) arguments;
+
+TestFnAsm4(p->buffer_addr,p->buffer_size);
 
 return NULL;
 }
@@ -123,11 +165,11 @@ void TestBuffer(int8_t *buffer_addr, uint32_t buffer_size,
 int main()
 {
 
-    struct thread_arguments_c thread_args_1;
-    struct thread_arguments_c thread_args_2;
+    struct thread_arguments thread_args_1;
+    struct thread_arguments thread_args_2;
 
-    struct thread_arguments_a thread_args_a_1;
-    struct thread_arguments_a thread_args_a_2;
+    struct thread_arguments_wtv thread_args_wtv_1;
+    struct thread_arguments_wtv thread_args_wtv_2;
 
     pthread_t thread_id_1;
     pthread_t thread_id_2;
@@ -178,21 +220,87 @@ int main()
 
 /*********************************************************************/
 
-    printf("testing asm\n");
+    printf("testing asm, without temp variable\n");
 
     memset(test_buffer_1, 1, SIZE_OF_BUFFER);
     memset(test_buffer_2, 2, SIZE_OF_BUFFER);
 
-    thread_args_a_1.buffer_addr = test_buffer_1;
-    thread_args_a_1.buffer_size = SIZE_OF_BUFFER;
-    //thread_args_a_1.tmp_var = 0;
+    thread_args_1.buffer_addr = test_buffer_1;
+    thread_args_1.buffer_size = SIZE_OF_BUFFER;
 
-    thread_args_a_2.buffer_addr = test_buffer_2;
-    thread_args_a_2.buffer_size = SIZE_OF_BUFFER;
-    //thread_args_a_2.tmp_var = 0;
+    thread_args_2.buffer_addr = test_buffer_2;
+    thread_args_2.buffer_size = SIZE_OF_BUFFER;
 
-    pthread_create ( &thread_id_1, NULL, &ThreadPrgAsm, &thread_args_a_1);
-    pthread_create ( &thread_id_2, NULL, &ThreadPrgAsm, &thread_args_a_2);
+    pthread_create ( &thread_id_1, NULL, &ThreadPrgAsm1, &thread_args_1);
+    pthread_create ( &thread_id_2, NULL, &ThreadPrgAsm1, &thread_args_2);
+
+    pthread_join(thread_id_1, NULL);
+    pthread_join(thread_id_2, NULL);
+
+    TestBuffer( test_buffer_1, SIZE_OF_BUFFER,  2, "buffer 1");
+    TestBuffer( test_buffer_2, SIZE_OF_BUFFER,  3, "buffer 2");
+
+/*********************************************************************/
+
+    printf("testing asm, with TLS (thread-local storage)\n");
+
+    memset(test_buffer_1, 1, SIZE_OF_BUFFER);
+    memset(test_buffer_2, 2, SIZE_OF_BUFFER);
+
+    thread_args_1.buffer_addr = test_buffer_1;
+    thread_args_1.buffer_size = SIZE_OF_BUFFER;
+
+    thread_args_2.buffer_addr = test_buffer_2;
+    thread_args_2.buffer_size = SIZE_OF_BUFFER;
+
+    pthread_create ( &thread_id_1, NULL, &ThreadPrgAsm2, &thread_args_1);
+    pthread_create ( &thread_id_2, NULL, &ThreadPrgAsm2, &thread_args_2);
+
+    pthread_join(thread_id_1, NULL);
+    pthread_join(thread_id_2, NULL);
+
+    TestBuffer( test_buffer_1, SIZE_OF_BUFFER,  2, "buffer 1");
+    TestBuffer( test_buffer_2, SIZE_OF_BUFFER,  3, "buffer 2");
+
+/*********************************************************************/
+
+    printf("testing asm, with temporary variable from C\n");
+
+    memset(test_buffer_1, 1, SIZE_OF_BUFFER);
+    memset(test_buffer_2, 2, SIZE_OF_BUFFER);
+
+    thread_args_wtv_1.buffer_addr = test_buffer_1;
+    thread_args_wtv_1.buffer_size = SIZE_OF_BUFFER;
+    //thread_args_wtv_1.tmp_var = 0;
+
+    thread_args_wtv_2.buffer_addr = test_buffer_2;
+    thread_args_wtv_2.buffer_size = SIZE_OF_BUFFER;
+    //thread_args_wtv_2.tmp_var = 0;
+
+    pthread_create ( &thread_id_1, NULL, &ThreadPrgAsm3, &thread_args_wtv_1);
+    pthread_create ( &thread_id_2, NULL, &ThreadPrgAsm3, &thread_args_wtv_2);
+
+    pthread_join(thread_id_1, NULL);
+    pthread_join(thread_id_2, NULL);
+
+    TestBuffer( test_buffer_1, SIZE_OF_BUFFER,  2, "buffer 1");
+    TestBuffer( test_buffer_2, SIZE_OF_BUFFER,  3, "buffer 2");
+
+/*********************************************************************/
+
+    printf("testing asm, with stack\n");
+
+    memset(test_buffer_1, 1, SIZE_OF_BUFFER);
+    memset(test_buffer_2, 2, SIZE_OF_BUFFER);
+
+    thread_args_1.buffer_addr = test_buffer_1;
+    thread_args_1.buffer_size = SIZE_OF_BUFFER;
+
+    thread_args_2.buffer_addr = test_buffer_2;
+    thread_args_2.buffer_size = SIZE_OF_BUFFER;
+
+    pthread_create ( &thread_id_1, NULL, &ThreadPrgAsm4, &thread_args_1);
+    pthread_create ( &thread_id_2, NULL, &ThreadPrgAsm4, &thread_args_2);
 
     pthread_join(thread_id_1, NULL);
     pthread_join(thread_id_2, NULL);

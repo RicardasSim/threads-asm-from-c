@@ -7,7 +7,10 @@
 extern "C" {
 #endif
 
-uint64_t TestFnAsm ( int8_t*, uint64_t , int8_t*);
+uint64_t TestFnAsm1 ( int8_t*, uint64_t);
+uint64_t TestFnAsm2 ( int8_t*, uint64_t);
+uint64_t TestFnAsm3 ( int8_t*, uint64_t, int8_t*);
+uint64_t TestFnAsm4 ( int8_t*, uint64_t);
 
 #ifdef __cplusplus
 }
