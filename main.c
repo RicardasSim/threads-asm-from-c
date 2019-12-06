@@ -144,6 +144,7 @@ void TestBuffer(int8_t *buffer_addr, uint32_t buffer_size,
         if ( buffer_addr[i] != value )
         {
             test_flag = true;
+            break;
         }
     }
 
